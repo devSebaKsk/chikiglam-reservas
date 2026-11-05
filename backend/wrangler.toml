@@ -1,0 +1,25 @@
+name = "chikiglam-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chikiglam-db"
+database_id = "9bb54106-34d2-4cd8-b9a3-70b3c53fcf4c"
+migrations_dir = "db/migrations"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "9c49737db5df450981249fc6493108e8"
+
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "chikiglam-assets"
+
+[dev]
+port = 8787
+local_protocol = "http"

@@ -1,0 +1,27 @@
+{
+  "name": "chikiglam-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "build": "tsc",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply chikiglam-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply chikiglam-db",
+    "db:seed": "wrangler d1 execute chikiglam-db --file=./db/seeds/seed.sql",
+    "db:seed:local": "wrangler d1 execute chikiglam-db --local --file=./db/seeds/seed.sql"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "hono": "^4.2.0",
+    "jose": "^5.2.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240320.1",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^5.4.3",
+    "wrangler": "^4.83.0"
+  }
+}

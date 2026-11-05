@@ -1,0 +1,17 @@
+{
+  "name": "chikiglam-reservas",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev:front": "npm run dev --workspace=frontend",
+    "dev:back": "npm run dev --workspace=backend",
+    "dev": "concurrently \"npm run dev:front\" \"npm run dev:back\"",
+    "build:front": "npm run build --workspace=frontend",
+    "build:back": "npm run build --workspace=backend",
+    "deploy:front": "npm run deploy --workspace=frontend",
+    "deploy:back": "npm run deploy --workspace=backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

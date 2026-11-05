@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border m-0 p-0;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-zinc-950 text-zinc-100 font-sans antialiased;
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar        { @apply w-1; }
+  ::-webkit-scrollbar-track  { @apply bg-zinc-900; }
+  ::-webkit-scrollbar-thumb  { @apply bg-zinc-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-zinc-600; }
+  /* Safe area support (iOS notch) */
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+@layer components {
+  /* ─── Brand Button ─────────────────────────────────────────────────────── */
+  .btn-brand {
+    @apply relative overflow-hidden
+           bg-brand-gradient text-white font-semibold
+           rounded-3xl py-4 px-6 w-full text-center text-base
+           shadow-brand transition-all duration-200
+           hover:opacity-90 hover:shadow-brand-lg hover:-translate-y-0.5
+           active:scale-[0.97] active:shadow-brand
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none;
+  }
+  .btn-brand-sm {
+    @apply btn-brand py-2.5 px-5 text-sm rounded-2xl;
+  }
+  .btn-brand-outline {
+    @apply border border-brand-pink text-brand-pink rounded-3xl
+           py-3.5 px-6 w-full font-semibold text-center
+           hover:bg-brand-pink/10 transition-all duration-200
+           active:scale-[0.97];
+  }
+  .btn-ghost {
+    @apply text-zinc-400 hover:text-zinc-100 rounded-xl
+           py-2 px-4 font-medium hover:bg-zinc-800
+           transition-all duration-200 active:scale-95;
+  }
+  /* Legacy aliases */
+  .btn-primary  { @apply btn-brand; }
+  .btn-secondary { @apply btn-brand-outline; }
+  .btn-outline  { @apply border border-zinc-600 text-zinc-300 hover:bg-zinc-800 font-medium py-2 px-4 rounded-xl transition-colors duration-200; }
+
+  /* ─── Cards ────────────────────────────────────────────────────────────── */
+  .dark-card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-2xl;
+  }
+  .dark-card-elevated {
+    @apply bg-zinc-800 border border-zinc-700 rounded-2xl;
+  }
+  .card {
+    @apply bg-zinc-900 rounded-2xl border border-zinc-800 p-5;
+  }
+  .card-glow {
+    @apply dark-card shadow-brand transition-shadow duration-300 hover:shadow-brand-lg;
+  }
+
+  /* ─── Inputs ───────────────────────────────────────────────────────────── */
+  .input-dark {
+    @apply w-full bg-zinc-900 border border-zinc-700 rounded-2xl
+           px-4 py-3.5 text-white placeholder-zinc-500 text-base
+           focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/50
+           transition-all duration-200;
+  }
+  .input-field {
+    @apply input-dark;
+  }
+  .label-dark {
+    @apply block text-sm font-medium text-zinc-400 mb-1.5;
+  }
+
+  /* ─── Page container ───────────────────────────────────────────────────── */
+  .page-container {
+    @apply px-4 pt-4 pb-6 space-y-5;
+  }
+  .page-title {
+    @apply text-2xl font-display font-bold text-white;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-zinc-100;
+  }
+
+  /* ─── Order Status Badges ──────────────────────────────────────────────── */
+  .badge-pending-payment      { @apply inline-flex items-center gap-1 bg-zinc-800 text-zinc-400 text-xs font-semibold px-3 py-1 rounded-full; }
+  .badge-pending-confirmation { @apply inline-flex items-center gap-1 bg-brand-yellow/15 text-brand-yellow text-xs font-semibold px-3 py-1 rounded-full; }
+  .badge-confirmed            { @apply inline-flex items-center gap-1 bg-brand-cyan/15 text-brand-cyan text-xs font-semibold px-3 py-1 rounded-full; }
+  .badge-cancelled            { @apply inline-flex items-center gap-1 bg-red-900/30 text-red-400 text-xs font-semibold px-3 py-1 rounded-full; }
+  .badge-completed            { @apply inline-flex items-center gap-1 bg-brand-purple/20 text-brand-purple text-xs font-semibold px-3 py-1 rounded-full; }
+
+  /* ─── Skeleton shimmer ─────────────────────────────────────────────────── */
+  .skeleton {
+    @apply bg-zinc-800 rounded-xl animate-shimmer;
+    background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
+    background-size: 800px 100%;
+  }
+
+  /* ─── Bottom sheet overlay ─────────────────────────────────────────────── */
+  .sheet-overlay {
+    @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-40;
+  }
+  .sheet {
+    @apply fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile
+           bg-zinc-900 rounded-t-3xl z-50;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .sheet-handle {
+    @apply w-10 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-4;
+  }
+
+  /* ─── Gradient text ────────────────────────────────────────────────────── */
+  .gradient-text {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+
+  /* ─── Divider ──────────────────────────────────────────────────────────── */
+  .divider {
+    @apply border-t border-zinc-800 my-4;
+  }
+
+  /* ─── Utility: hide scrollbar ──────────────────────────────────────────── */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ─── Safe area bottom padding (BottomNav) ─────────────────────────────── */
+  .safe-area-pb { padding-bottom: calc(env(safe-area-inset-bottom) + 0px); }
+}
