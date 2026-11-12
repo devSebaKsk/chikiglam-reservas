@@ -16,6 +16,13 @@ const STATUS_FILTERS: Array<{ label: string; value: OrderStatus | 'all' }> = [
   { label: 'Canceladas', value: 'cancelled' },
 ]
 
+// Fecha local de hoy en formato YYYY-MM-DD (no usar toISOString: es UTC y en
+// Argentina después de las 21hs ya daría el día siguiente).
+function localToday(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function AdminOrdersPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -23,6 +30,7 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [showPast, setShowPast] = useState(false)
   const ref = useGsapFadeIn()
 
   useEffect(() => {
@@ -59,6 +67,84 @@ export default function AdminOrdersPage() {
     }
     return true
   })
+
+  // Próximas: de la fecha más cercana a la más lejana. Pasadas: la más reciente primero.
+  const today = localToday()
+  const upcoming = filtered
+    .filter(o => o.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt))
+  const past = filtered
+    .filter(o => o.date < today)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
+
+  const renderOrder = (order: Order) => (
+    <div
+      key={order.id}
+      onClick={() => navigate(`/admin/orders/${order.id}`)}
+      className="dark-card p-4 space-y-3 cursor-pointer hover:bg-zinc-800/60 transition-colors"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-zinc-100 font-semibold text-sm truncate">
+            {order.userName ?? 'Cliente'} — {order.packName}
+          </p>
+          <p className="text-zinc-500 text-xs mt-0.5">
+            {order.date} · {order.peopleCount} personas
+          </p>
+        </div>
+        <OrderStatusBadge status={order.status} size="sm" />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-brand-yellow font-mono font-bold text-sm">
+          ${order.totalPrice.toLocaleString()}
+        </span>
+        <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+          {order.status === 'pending_confirmation' && (
+            <button
+              onClick={() => handleViewProof(order.id)}
+              className="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-300 px-3 py-1.5 rounded-xl"
+            >
+              📎 Comprobante
+            </button>
+          )}
+          {order.status === 'pending_confirmation' && (
+            <button
+              onClick={() => handleUpdateStatus(order.id, 'confirmed')}
+              className="text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl hover:bg-emerald-500/30"
+            >
+              ✓ Confirmar
+            </button>
+          )}
+          {(order.status === 'pending_payment' || order.status === 'pending_confirmation') && (
+            <button
+              onClick={() => handleUpdateStatus(order.id, 'cancelled')}
+              className="text-xs bg-red-500/15 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/25"
+            >
+              ✕ Cancelar
+            </button>
+          )}
+          {order.status === 'cancelled' && (
+            <button
+              onClick={async () => {
+                if (!window.confirm('¿Eliminar esta reserva permanentemente?')) return
+                try {
+                  await orderService.deleteOrder(order.id)
+                  setOrders(list => list.filter(o => o.id !== order.id))
+                  dispatch(addToast({ message: 'Reserva eliminada', type: 'success' }))
+                } catch {
+                  dispatch(addToast({ message: 'Error al eliminar', type: 'error' }))
+                }
+              }}
+              className="text-xs bg-red-900/30 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-900/50"
+            >
+              🗑 Borrar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div ref={ref} className="px-4 py-6">
@@ -100,79 +186,28 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <div className="space-y-3">{Array.from({length: 4}).map((_,i) => <div key={i} className="skeleton h-28 rounded-2xl" />)}</div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-zinc-500">No hay reservas.</div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(order => (
-            <div
-              key={order.id}
-              onClick={() => navigate(`/admin/orders/${order.id}`)}
-              className="dark-card p-4 space-y-3 cursor-pointer hover:bg-zinc-800/60 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-zinc-100 font-semibold text-sm truncate">
-                    {order.userName ?? 'Cliente'} — {order.packName}
-                  </p>
-                  <p className="text-zinc-500 text-xs mt-0.5">
-                    {order.date} · {order.peopleCount} personas
-                  </p>
-                </div>
-                <OrderStatusBadge status={order.status} size="sm" />
-              </div>
+        <>
+          {upcoming.length === 0 ? (
+            <div className="text-center py-12 text-zinc-500">No hay próximas reservas.</div>
+          ) : (
+            <div className="space-y-3">{upcoming.map(renderOrder)}</div>
+          )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-brand-yellow font-mono font-bold text-sm">
-                  ${order.totalPrice.toLocaleString()}
-                </span>
-                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                  {order.status === 'pending_confirmation' && (
-                    <button
-                      onClick={() => handleViewProof(order.id)}
-                      className="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-300 px-3 py-1.5 rounded-xl"
-                    >
-                      📎 Comprobante
-                    </button>
-                  )}
-                  {order.status === 'pending_confirmation' && (
-                    <button
-                      onClick={() => handleUpdateStatus(order.id, 'confirmed')}
-                      className="text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl hover:bg-emerald-500/30"
-                    >
-                      ✓ Confirmar
-                    </button>
-                  )}
-                  {(order.status === 'pending_payment' || order.status === 'pending_confirmation') && (
-                    <button
-                      onClick={() => handleUpdateStatus(order.id, 'cancelled')}
-                      className="text-xs bg-red-500/15 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/25"
-                    >
-                      ✕ Cancelar
-                    </button>
-                  )}
-                  {order.status === 'cancelled' && (
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm('¿Eliminar esta reserva permanentemente?')) return
-                        try {
-                          await orderService.deleteOrder(order.id)
-                          setOrders(list => list.filter(o => o.id !== order.id))
-                          dispatch(addToast({ message: 'Reserva eliminada', type: 'success' }))
-                        } catch {
-                          dispatch(addToast({ message: 'Error al eliminar', type: 'error' }))
-                        }
-                      }}
-                      className="text-xs bg-red-900/30 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-900/50"
-                    >
-                      🗑 Borrar
-                    </button>
-                  )}
-                </div>
-              </div>
+          {past.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowPast(v => !v)}
+                className="w-full text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200 px-3 py-2.5 rounded-xl font-medium transition-colors"
+              >
+                {showPast ? '▲ Ocultar fechas pasadas' : `▼ Ver fechas pasadas (${past.length})`}
+              </button>
+              {showPast && (
+                <div className="space-y-3 mt-3 opacity-80">{past.map(renderOrder)}</div>
+              )}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )
